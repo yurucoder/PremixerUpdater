@@ -4,13 +4,14 @@ import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.ui.Modifier
 import androidx.compose.ui.tooling.preview.Preview
+import androidx.navigation.NavController
+import androidx.navigation.compose.NavHost
+import androidx.navigation.compose.composable
+import androidx.navigation.compose.rememberNavController
+import com.example.premixerupdater.screens.CreateRecipeScreen
+import com.example.premixerupdater.screens.HomeScreen
 import com.example.premixerupdater.ui.theme.PremixerUpdaterTheme
 
 class MainActivity : ComponentActivity() {
@@ -19,29 +20,40 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             PremixerUpdaterTheme {
-                Scaffold(modifier = Modifier.fillMaxSize()) { innerPadding ->
-                    Greeting(
-                        name = "Android",
-                        modifier = Modifier.padding(innerPadding)
-                    )
-                }
+                MainScreen()
             }
         }
     }
 }
 
+sealed class Screen(val route: String) {
+    object Home : Screen("home")
+    object CreateRecipe : Screen("create_recipe")
+//    object WatchRecipe : Screen("detail/{id}") {
+//        fun createRoute(id: Int) = "detail/$id"
+//    }
+}
+
 @Composable
-fun Greeting(name: String, modifier: Modifier = Modifier) {
-    Text(
-        text = "Hello $name!",
-        modifier = modifier
-    )
+fun MainScreen() {
+    val navController: NavController = rememberNavController()
+    NavHost(
+        navController = navController,
+        startDestination = Screen.Home.route
+    ) {
+        composable(Screen.Home.route) {
+            HomeScreen(navController)
+        }
+        composable(Screen.CreateRecipe.route) {
+            CreateRecipeScreen(navController)
+        }
+    }
 }
 
 @Preview(showBackground = true)
 @Composable
-fun GreetingPreview() {
+fun PreviewMainScreen() {
     PremixerUpdaterTheme {
-        Greeting("Android")
+        MainScreen()
     }
 }
