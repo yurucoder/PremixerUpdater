@@ -1,3 +1,19 @@
 <resources>
+    <!--  Basic  -->
     <string name="app_name">PremixerUpdater</string>
+    <string name="title">Premixer</string>
+    <string name="device_not_support">Device doesn\'t support Bluetooth</string>
+    <!--  No Connected Screen  -->
+    <string name="device_not_connected">Device Not Connected.</string>
+    <string name="go_settings">Go settings</string>
+    <string name="check_device_toast">Please connect to device.</string>
+    <!--  Home Screen  -->
+    <string name="home">Home</string>
+    <string name="create_recipe">Create Recipe</string>
+    <string name="current_recipe">Current Recipe</string>
+    <string name="history">History</string>
+    <!--  Create Recipe Screen  -->
+    <string name="go_home">"Go Home"</string>
+    <string name="drink_slot">"Drink Slot"</string>
+    <string name="add_recipes">"Add Recipes"</string>
 </resources>

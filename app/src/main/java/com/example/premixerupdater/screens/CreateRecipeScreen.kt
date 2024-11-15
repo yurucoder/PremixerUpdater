@@ -5,29 +5,29 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Check
+import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Modifier
-import androidx.navigation.NavController
+import androidx.compose.ui.res.stringResource
+import androidx.navigation.NavHostController
+import com.example.premixerupdater.R
 import com.example.premixerupdater.Screen
+import com.example.premixerupdater.ui.theme.Typography
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
-fun CreateRecipeScreen(
-    navController: NavController,
-    modifier: Modifier = Modifier
-) {
+fun CreateRecipeScreen(navController: NavHostController) {
     Scaffold(
         topBar = {
-            TopAppBar(
+            CenterAlignedTopAppBar(
                 title = {
                     Text(
-                        "Create Recipe",
+                        stringResource(R.string.create_recipe),
                     )
                 },
                 navigationIcon = {
@@ -36,7 +36,7 @@ fun CreateRecipeScreen(
                     ) {
                         Icon(
                             imageVector = Icons.AutoMirrored.Filled.ArrowBack,
-                            contentDescription = "Go Home"
+                            contentDescription = stringResource(R.string.go_home)
                         )
                     }
                 },
@@ -49,7 +49,7 @@ fun CreateRecipeScreen(
                     ) {
                         Icon(
                             imageVector = Icons.Filled.Check,
-                            contentDescription = "Create Recipe"
+                            contentDescription = stringResource(R.string.create_recipe)
                         )
                     }
                 }
@@ -57,9 +57,15 @@ fun CreateRecipeScreen(
         },
     ) { innerPadding ->
         Column(modifier = Modifier.padding(innerPadding)) {
-            Text("Drink Slot")
+            Text(
+                stringResource(R.string.drink_slot),
+                style = Typography.headlineLarge
+            )
             // TODO: ADD SLOT FORM
-            Text("Add Recipes")
+            Text(
+                stringResource(R.string.add_recipes),
+                style = Typography.headlineLarge
+            )
             // TODO: ADD RECIPE FORM
         }
     }
