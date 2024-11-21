@@ -3,6 +3,7 @@
     <string name="app_name">PremixerUpdater</string>
     <string name="title">Premixer</string>
     <string name="device_not_support">Device doesn\'t support Bluetooth</string>
+    <string name="permission_not_granted">Permission is not granted</string>
     <!--  No Connected Screen  -->
     <string name="device_not_connected">Device Not Connected.</string>
     <string name="go_settings">Go settings</string>

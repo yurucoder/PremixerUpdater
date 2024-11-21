@@ -1,17 +1,16 @@
 package com.example.premixerupdater
 
-import android.annotation.SuppressLint
+import android.Manifest
 import android.bluetooth.BluetoothAdapter
 import android.bluetooth.BluetoothManager
-import android.content.Intent
+import android.content.pm.PackageManager
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.runtime.Composable
-import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.tooling.preview.Preview
+import androidx.compose.ui.res.stringResource
+import androidx.core.app.ActivityCompat
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
@@ -20,60 +19,74 @@ import com.example.premixerupdater.screens.CreateRecipeScreen
 import com.example.premixerupdater.screens.HomeScreen
 import com.example.premixerupdater.ui.theme.PremixerUpdaterTheme
 
+const val PERMISSION_REQUEST_CODE = 100
+
 class MainActivity : ComponentActivity() {
-    @SuppressLint("MissingPermission")
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
             val bluetoothManager: BluetoothManager = getSystemService(BluetoothManager::class.java)
-            val bluetoothAdapter: BluetoothAdapter? = bluetoothManager.getAdapter()
+            val bluetoothAdapter: BluetoothAdapter? = bluetoothManager.adapter
+
+            // Check Device Support
             if (bluetoothAdapter == null) {
                 Toast.makeText(
-                    LocalContext.current, R.string.device_not_support, Toast.LENGTH_SHORT
+                    this, R.string.device_not_support, Toast.LENGTH_SHORT
                 ).show()
+                throw RuntimeException(stringResource(R.string.device_not_support))
             }
 
-            if (bluetoothAdapter?.isEnabled == false) {
-                val enableBtIntent = Intent(BluetoothAdapter.ACTION_REQUEST_ENABLE)
-                startActivity(enableBtIntent)
+            // Check Bluetooth Permission
+            if (ActivityCompat.checkSelfPermission(
+                    this,
+                    Manifest.permission.BLUETOOTH_CONNECT
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                ActivityCompat.requestPermissions(
+                    this,
+                    arrayOf(Manifest.permission.BLUETOOTH_CONNECT),
+                    PERMISSION_REQUEST_CODE
+                )
             }
+
+            val navController: NavHostController = rememberNavController()
 
             PremixerUpdaterTheme {
-                MainScreen()
+                NavHost(
+                    navController = navController, startDestination = Screen.Home.route
+                ) {
+                    composable(Screen.Home.route) {
+                        HomeScreen(navController, bluetoothAdapter)
+                    }
+                    composable(Screen.CreateRecipe.route) {
+                        CreateRecipeScreen(navController)
+                    }
+                }
             }
         }
     }
-}
 
-sealed class Screen(val route: String) {
-    object Home : Screen("home")
-    object CreateRecipe : Screen("create_recipe")
-//    object WatchRecipe : Screen("detail/{id}") {
-//        fun createRoute(id: Int) = "detail/$id"
-//    }
-}
-
-@Composable
-fun MainScreen(
-    navController: NavHostController = rememberNavController()
-) {
-    NavHost(
-        navController = navController, startDestination = Screen.Home.route
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String?>,
+        grantResults: IntArray,
+        deviceId: Int
     ) {
-        composable(Screen.Home.route) {
-            HomeScreen(navController)
-        }
-        composable(Screen.CreateRecipe.route) {
-            CreateRecipeScreen(navController)
-        }
-    }
-}
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults, deviceId)
 
-@Preview(showBackground = true)
-@Composable
-fun PreviewMainScreen() {
-    PremixerUpdaterTheme {
-        MainScreen()
+        when (requestCode) {
+            PERMISSION_REQUEST_CODE -> {
+                if (grantResults.isNotEmpty() &&
+                    grantResults[0] != PackageManager.PERMISSION_GRANTED
+                ) {
+                    Toast.makeText(
+                        this, R.string.permission_not_granted, Toast.LENGTH_SHORT
+                    ).show()
+                    throw RuntimeException()
+                }
+            }
+        }
     }
 }
