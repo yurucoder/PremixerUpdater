@@ -1,69 +1,80 @@
 package com.example.premixerupdater
 
-import android.Manifest
 import android.bluetooth.BluetoothAdapter
-import android.bluetooth.BluetoothManager
+import android.bluetooth.BluetoothSocket
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.widget.Toast
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
-import androidx.compose.ui.res.stringResource
-import androidx.core.app.ActivityCompat
+import androidx.compose.runtime.Composable
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.example.premixerupdater.screens.CreateRecipeScreen
 import com.example.premixerupdater.screens.HomeScreen
+import com.example.premixerupdater.services.BluetoothService
 import com.example.premixerupdater.ui.theme.PremixerUpdaterTheme
+import java.io.IOException
+import java.util.UUID
 
-const val PERMISSION_REQUEST_CODE = 100
+val BT06_UUID = UUID.fromString("00001101-0000-1000-8000-00805F9B34FB")
+
+sealed class Screen(val route: String) {
+    object Home : Screen("home")
+    object CreateRecipe : Screen("create_recipe")
+//    object WatchRecipe : Screen("detail/{id}") {
+//        fun createRoute(id: Int) = "detail/$id"
+//    }
+}
 
 class MainActivity : ComponentActivity() {
+
+    lateinit var bluetoothService: BluetoothService
+    lateinit var bluetoothAdapter: BluetoothAdapter
+    lateinit var bluetoothSocket: BluetoothSocket
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+
+        try {
+            bluetoothService = BluetoothService(this)
+            bluetoothAdapter = bluetoothService.adapter
+        } catch (e: RuntimeException) {
+            Toast.makeText(this, e.message, Toast.LENGTH_SHORT).show()
+        }
+
         setContent {
-            val bluetoothManager: BluetoothManager = getSystemService(BluetoothManager::class.java)
-            val bluetoothAdapter: BluetoothAdapter? = bluetoothManager.adapter
-
-            // Check Device Support
-            if (bluetoothAdapter == null) {
-                Toast.makeText(
-                    this, R.string.device_not_support, Toast.LENGTH_SHORT
-                ).show()
-                throw RuntimeException(stringResource(R.string.device_not_support))
-            }
-
-            // Check Bluetooth Permission
-            if (ActivityCompat.checkSelfPermission(
-                    this,
-                    Manifest.permission.BLUETOOTH_CONNECT
-                ) != PackageManager.PERMISSION_GRANTED
-            ) {
-                ActivityCompat.requestPermissions(
-                    this,
-                    arrayOf(Manifest.permission.BLUETOOTH_CONNECT),
-                    PERMISSION_REQUEST_CODE
-                )
-            }
-
-            val navController: NavHostController = rememberNavController()
-
             PremixerUpdaterTheme {
-                NavHost(
-                    navController = navController, startDestination = Screen.Home.route
-                ) {
-                    composable(Screen.Home.route) {
-                        HomeScreen(navController, bluetoothAdapter)
-                    }
-                    composable(Screen.CreateRecipe.route) {
-                        CreateRecipeScreen(navController)
-                    }
-                }
+                AppNavigation(rememberNavController())
+            }
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        if (!bluetoothService.deviceIsConnected) {
+            try {
+                bluetoothSocket = bluetoothService.connectDeviceAsSocket("BT-06", BT06_UUID)
+            } catch (e: RuntimeException) {
+                Toast.makeText(this, e.message, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    @Composable
+    fun AppNavigation(navController: NavHostController) {
+        NavHost(
+            navController = navController, startDestination = Screen.Home.route
+        ) {
+            composable(Screen.Home.route) {
+                HomeScreen(navController, bluetoothService)
+            }
+            composable(Screen.CreateRecipe.route) {
+                CreateRecipeScreen(navController, bluetoothSocket)
             }
         }
     }
@@ -75,18 +86,21 @@ class MainActivity : ComponentActivity() {
         deviceId: Int
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults, deviceId)
-
         when (requestCode) {
-            PERMISSION_REQUEST_CODE -> {
-                if (grantResults.isNotEmpty() &&
-                    grantResults[0] != PackageManager.PERMISSION_GRANTED
-                ) {
-                    Toast.makeText(
-                        this, R.string.permission_not_granted, Toast.LENGTH_SHORT
-                    ).show()
-                    throw RuntimeException()
-                }
+            BluetoothService.PERMISSION_REQUEST_CODE -> {
+                bluetoothService.permissionIsAvailable = grantResults.isNotEmpty() &&
+                        grantResults[0] == PackageManager.PERMISSION_GRANTED
+                return
             }
+        }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        try {
+            bluetoothSocket.close()
+        } catch (e: IOException) {
+            e.printStackTrace()
         }
     }
 }
